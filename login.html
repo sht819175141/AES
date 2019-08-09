@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+
+<body>
+  <input type="hidden" id="KEY" value="${Session.login_token}" />
+  <form action="signIn" method="post" id="loginForm">
+    <div class="form-group has-feedback">
+      <input type="text" class="form-control" placeholder="Email" name="username" onkeydown="javascript:if(event.keyCode==13) $('#password').focus();">
+    </div>
+    <div class="form-group has-feedback">
+      <input type="password" class="form-control" id="password" id="formPwd" onkeydown="javascript:if(event.keyCode==13) login();">
+    </div>
+    <#if Session.login_failure_count?? && (Session.login_failure_count <=0)>
+      <div class="form-group has-feedback">
+        <input name="checkCode" onkeydown="javascript:if(event.keyCode==13)  login();" type="text" id="checkCode" maxlength="4" onblur="checkTheCode(this)" style="width:120px;" />
+        <img src="getCode.do" id="CreateCheckCode" align="middle" title="点击刷新验证码" onclick="getCode()" style="cursor: pointer;">
+        <span id="checkCodeSpan" style="float: right;color: red;"></span>
+      </div>
+    </#if>
+    <div class="row">
+      <!-- /.col -->
+      <div class="col-xs-4">
+        <button type="button" onclick="login()" class="btn btn-primary btn-block btn-flat">登录</button>
+      </div>
+      <!-- /.col -->
+    </div>
+  </form>
+
+  <script src="jquery.min.js"></script>
+  <script src="aes.js"></script>
+  <script src="mode-ecb.min.js"></script>
+  <script>
+    function login() {
+      $('#loginForm').form('submit', {
+        onSubmit: function(param) {
+          var username = $('#loginForm input[name=username]').val();
+          var p = $('#loginForm #password').val();
+
+          if ($.trim(username) == '') {
+            alert('账号不能为空！')
+            $('#loginForm input[name=username]').focus();
+            return false;
+          }
+
+          if ($.trim(p) == '') {
+            alert('密码不能为空！')
+            $('#loginForm #password').focus();
+            return false;
+          }
+
+          var checkCodeInput = $('#loginForm #checkCode');
+          if (checkCodeInput.length > 0) { //判断元素是否存在
+            var checkCode = checkCodeInput.val();
+            if ($.trim(checkCode) == '' || checkCode.length != 4) {
+              alert('请输入4位验证码！')
+              checkCodeInput.select();
+              checkCodeInput.focus();
+              return false;
+            }
+          }
+
+
+          var key = $('#KEY').val();
+          key = CryptoJS.enc.Utf8.parse(key);
+          p = CryptoJS.enc.Utf8.parse($.trim(p));
+          var encrypted = CryptoJS.AES.encrypt(p, key, {
+            mode: CryptoJS.mode.ECB,
+            padding: CryptoJS.pad.Pkcs7
+          });
+          param.password = encrypted.toString();
+          
+        },
+        success: function(data) {
+          var data = eval('(' + data + ')');
+          if (data.success) {
+            window.location.href = '${request.contextPath}/';
+          } else {
+            if (data.info == 'timeout') { //可能已经就登录了，无需再次登录
+              alert('登录超时或已经登录！');
+              window.location.href = '${request.contextPath}/';
+            } else if ('checkCode' == data.info) { //需要验证码了
+              alert('用户名或密码错误！');
+              window.location.href = 'login';
+            } else if ('codeError' == data.info) { //验证码错误
+              getCode();
+              $('#checkCodeSpan').text('验证码错误');
+              $('#loginForm #checkCode').select();
+              $('#loginForm #checkCode').focus();
+            } else {
+              //登录失败，更新login_token
+              $('#KEY').val(data.data);
+              if ($('#checkCodeSpan')) {
+                $('#checkCodeSpan').text('');
+              }
+              alert(data.info);
+            }
+          }
+        }
+      });
+    }
+
+    function getCode() {
+      $("#CreateCheckCode").attr('src', "getCode.do?nocache=" + new Date().getTime());
+    }
+  </script>
+
+
+
+
+</body>
+
+</html>
