@@ -12,15 +12,19 @@
   <input type="hidden" id="KEY" value="${Session.login_token}" />
   <form action="signIn" method="post" id="loginForm">
     <div class="form-group has-feedback">
-      <input type="text" class="form-control" placeholder="Email" name="username" onkeydown="javascript:if(event.keyCode==13) $('#password').focus();">
+      <input type="text" class="form-control" placeholder="Email" name="username"
+        onkeydown="javascript:if(event.keyCode==13) $('#password').focus();">
     </div>
     <div class="form-group has-feedback">
-      <input type="password" class="form-control" id="password" id="formPwd" onkeydown="javascript:if(event.keyCode==13) login();">
+      <input type="password" class="form-control" id="password" id="formPwd"
+        onkeydown="javascript:if(event.keyCode==13) login();">
     </div>
     <#if Session.login_failure_count?? && (Session.login_failure_count <=0)>
       <div class="form-group has-feedback">
-        <input name="checkCode" onkeydown="javascript:if(event.keyCode==13)  login();" type="text" id="checkCode" maxlength="4" onblur="checkTheCode(this)" style="width:120px;" />
-        <img src="getCode.do" id="CreateCheckCode" align="middle" title="点击刷新验证码" onclick="getCode()" style="cursor: pointer;">
+        <input name="checkCode" onkeydown="javascript:if(event.keyCode==13)  login();" type="text" id="checkCode"
+          maxlength="4" onblur="checkTheCode(this)" style="width:120px;" />
+        <img src="getCode.do" id="CreateCheckCode" align="middle" title="点击刷新验证码" onclick="getCode()"
+          style="cursor: pointer;">
         <span id="checkCodeSpan" style="float: right;color: red;"></span>
       </div>
     </#if>
@@ -39,7 +43,7 @@
   <script>
     function login() {
       $('#loginForm').form('submit', {
-        onSubmit: function(param) {
+        onSubmit: function (param) {
           var username = $('#loginForm input[name=username]').val();
           var p = $('#loginForm #password').val();
 
@@ -75,9 +79,9 @@
             padding: CryptoJS.pad.Pkcs7
           });
           param.password = encrypted.toString();
-          
+
         },
-        success: function(data) {
+        success: function (data) {
           var data = eval('(' + data + ')');
           if (data.success) {
             window.location.href = '${request.contextPath}/';
